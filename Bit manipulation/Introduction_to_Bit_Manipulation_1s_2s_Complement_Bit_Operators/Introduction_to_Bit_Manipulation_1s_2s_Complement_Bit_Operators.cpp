@@ -1,7 +1,6 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-// ---------- 1. Number System Conversion ----------
 string decimalToBinary(int n) {
     if (n == 0) return "0";
     string binary = "";
@@ -22,16 +21,15 @@ int binaryToDecimal(string binary) {
     return decimal;
 }
 
-// ---------- 2. Memory Representation ----------
-void printBits(int n) {
+string printBits(int n) {
+    string result = "";
     for (int i = 31; i >= 0; i--) {
-        cout << ((n >> i) & 1);
-        if (i % 4 == 0) cout << " ";
+        result += ((n >> i) & 1) ? '1' : '0';
+        if (i % 4 == 0) result += ' ';
     }
-    cout << endl;
+    return result;
 }
 
-// ---------- 3. 1's and 2's Complement ----------
 string onesComplement(string binary) {
     string result = "";
     for (char b : binary) result += (b == '0') ? '1' : '0';
@@ -48,46 +46,42 @@ string twosComplement(string binary) {
     return ones;
 }
 
-// ---------- 6. Sign Bit Check ----------
-void showSignBit(int n) {
-    unsigned int mask = 1u << 31;
-    int signBit = (n & mask) ? 1 : 0;
-    cout << n << " -> Sign bit: " << signBit
-         << (signBit ? " (Negative)" : " (Positive)") << endl;
+int bitwiseAND(int a, int b) {
+    return a & b;
 }
 
-int main() {
-    cout << "===== 1. Number System Conversion =====\n";
-    cout << "13 in Binary: " << decimalToBinary(13) << endl;
-    cout << "1101 in Decimal: " << binaryToDecimal("1101") << endl;
+int bitwiseOR(int a, int b) {
+    return a | b;
+}
 
-    cout << "\n===== 2. Memory Representation (32-bit) =====\n";
-    cout << "13  -> "; printBits(13);
-    cout << "-13 -> "; printBits(-13);
+int bitwiseXOR(int a, int b) {
+    return a ^ b;
+}
 
-    cout << "\n===== 3. 1's and 2's Complement =====\n";
-    string bin = "00001101";
-    cout << "Original:       " << bin << endl;
-    cout << "1's Complement: " << onesComplement(bin) << endl;
-    cout << "2's Complement: " << twosComplement(bin) << endl;
+pair<int, int> xorSwap(int a, int b) {
+    a = a ^ b;
+    b = a ^ b;
+    a = a ^ b;
+    return {a, b};
+}
 
-    cout << "\n===== 4. Bitwise Operators =====\n";
-    int a = 5, b = 3;
-    cout << "a & b = " << (a & b) << endl;
-    cout << "a | b = " << (a | b) << endl;
-    cout << "a ^ b = " << (a ^ b) << endl;
+bool isOdd(int n) {
+    return n & 1;
+}
 
-    cout << "\n===== 5. Shift Operators =====\n";
-    cout << "5 << 1 = " << (5 << 1) << endl;
-    cout << "20 >> 1 = " << (20 >> 1) << endl;
+int leftShift(int n, int k) {
+    return n << k;
+}
 
-    cout << "\n===== 6. Negative Number Representation =====\n";
-    showSignBit(13);
-    showSignBit(-13);
+int rightShift(int n, int k) {
+    return n >> k;
+}
 
-    cout << "\n===== 7. NOT Operator =====\n";
-    int n = 5;
-    cout << "~5 = " << (~n) << endl;
+int getSignBit(int n) {
+    unsigned int mask = 1u << 31;
+    return (n & mask) ? 1 : 0;
+}
 
-    return 0;
+int bitwiseNOT(int n) {
+    return ~n;
 }
