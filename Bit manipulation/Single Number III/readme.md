@@ -1,236 +1,139 @@
-# Single Number III — LeetCode 260
+# Single Number III
 
-> Notes based on **take U forward** channel's explanation of Single Number III.
+## Problem
 
-## Problem Statement
+Given an array where every element appears **exactly twice** except **two elements** that appear only once, find those two unique numbers.
 
-Given an integer array `nums`, in which **every element appears exactly twice**
-except for **two elements** that appear only **once**, find those two
-unique elements. You may return the answer in any order.
+---
 
-**Example**
+# Brute Force
+
+Store the frequency of every element using a hash map.
+
+After counting, return the elements whose frequency is **1**.
+
+**Time Complexity:** `O(N)`
+
+**Space Complexity:** `O(N)`
+
+---
+
+# Optimized Idea
+
+The XOR of all elements removes every duplicate.
 
 ```
-Input:  nums = [1, 2, 1, 3, 2, 5]
-Output: [3, 5]
+a ^ a = 0
+```
+
+Only the two unique numbers remain.
+
+```
+xor = x ^ y
+```
+
+Since `x ≠ y`, at least one bit of `xor` must be set.
+
+---
+
+# Step 1
+
+Find the XOR of the complete array.
+
+```
+xor = x ^ y
 ```
 
 ---
 
-## Approach 1: Brute Force (Hash Map)
+# Step 2
 
-**Video timestamp:** `1:21 - 5:57`
-
-### Idea
-1. Traverse the array once and store the frequency of every number in a
-   hash map / ordered map.
-2. Traverse the map again and pick out the two keys whose frequency is `1`.
+Find the **rightmost set bit**.
 
 ```
-nums = [1, 2, 1, 3, 2, 5]
-
-Pass 1 (build frequency map):
-1 -> 2
-2 -> 2
-3 -> 1
-5 -> 1
-
-Pass 2 (pick freq == 1):
-Answer -> [3, 5]
+mask = xor & (-xor)
 ```
 
-### Complexity
-| Metric | Value |
-|---|---|
-| Time  | `O(N log M)` — M = number of distinct elements (map ops cost `log M`) |
-| Space | `O(M)` — extra space for the map |
-
-This works, but it's not optimal — we can do it in a single pass with
-**no extra space** using bit manipulation.
+This bit is different in the two unique numbers.
 
 ---
 
-## Approach 2: Optimized — Bit Manipulation (XOR + Bucketing)
-
-**Video timestamp:** `6:05 - 23:35`
-
-This is the interview-favorite approach. It relies on two XOR properties:
+# Visualization
 
 ```
-a ^ a = 0      (a number XORed with itself cancels out)
-a ^ 0 = a      (XOR with 0 leaves the number unchanged)
-XOR is commutative & associative (order doesn't matter)
-```
-
-### Step 1 — XOR everything
-
-**Timestamp:** `6:47 - 7:25`
-
-If we XOR every element of the array together, every duplicate pair
-cancels itself out (`a ^ a = 0`), leaving behind:
-
-```
-xorAll = uniqueA ^ uniqueB
-```
-
-```
-nums = [1, 2, 1, 3, 2, 5]
-
-1 ^ 2 ^ 1 ^ 3 ^ 2 ^ 5
-= (1^1) ^ (2^2) ^ 3 ^ 5
-=    0  ^   0   ^ 3 ^ 5
-= 3 ^ 5
-```
-
-So `xorAll` now holds the XOR of the two **unique** numbers — but we
-still need to separate them.
-
-### Step 2 — Find a differentiating (rightmost set) bit
-
-**Timestamp:** `8:43 - 11:27`
-
-Since `uniqueA != uniqueB`, `xorAll` is guaranteed to be **non-zero**,
-which means at least one bit position differs between the two numbers.
-
-We isolate the **rightmost set bit** of `xorAll` using the two's
-complement trick:
-
-```
-rightmostSetBit = xorAll & (-xorAll)
-```
-
-**Why this works (bit diagram):**
-
-```
-Suppose xorAll = 6  ->  binary: 0 1 1 0
-             -xorAll  =  ...1 0 1 0   (two's complement: invert + 1)
-
-  xorAll   :  0 1 1 0
- -xorAll   :  1 0 1 0
- -----------------------  AND
- result    :  0 0 1 0   -> rightmost set bit isolated (value = 2)
-```
-
-This single bit is guaranteed to be **set in one unique number** and
-**unset in the other** — that's exactly the "differentiating bit" we
-need to split the array into two groups.
-
-### Step 3 — Bucket the array using that bit
-
-**Timestamp:** `13:17 - 16:36`
-
-Now traverse the *original* array again. For every number, check if
-the `rightmostSetBit` is set:
-
-```
-if (num & rightmostSetBit) -> put it in Bucket 1
-else                       -> put it in Bucket 2
-```
-
-Because **duplicate numbers are identical**, both copies of any
-duplicate always land in the **same bucket** — so XOR-ing within each
-bucket cancels all duplicates, leaving exactly one unique number per
-bucket.
-
-```
-nums = [1, 2, 1, 3, 2, 5]
-xorAll = 3 ^ 5 = 6 (0110)
-rightmostSetBit = 2 (0010)
-
-Check bit 1 (value 2) for each number:
- 1 (0001) -> bit not set -> Bucket 2
- 2 (0010) -> bit set     -> Bucket 1
- 1 (0001) -> bit not set -> Bucket 2
- 3 (0011) -> bit set     -> Bucket 1
- 2 (0010) -> bit set     -> Bucket 1
- 5 (0101) -> bit not set -> Bucket 2
-
-Bucket 1: 2 ^ 3 ^ 2 = 3   (2's cancel, 3 remains)
-Bucket 2: 1 ^ 1 ^ 5 = 5   (1's cancel, 5 remains)
-
-Answer -> [3, 5]  ✅
-```
-
-### Diagram — full flow
-
-```
-        ┌────────────────────────────┐
-        │   XOR all elements of nums │
-        │  xorAll = uniqueA ^ uniqueB│
-        └──────────────┬─────────────┘
-                        │
-                        ▼
-        ┌────────────────────────────┐
-        │ Isolate rightmost set bit  │
-        │ rightmostSetBit =          │
-        │   xorAll & (-xorAll)       │
-        └──────────────┬─────────────┘
-                        │
-                        ▼
-        ┌────────────────────────────┐
-        │ Split nums into 2 buckets  │
-        │ based on that bit          │
-        └───────┬────────────┬───────┘
-                 │            │
-                 ▼            ▼
-        ┌────────────┐ ┌────────────┐
-        │  Bucket 1  │ │  Bucket 2  │
-        │  XOR all   │ │  XOR all   │
-        │ = uniqueA  │ │ = uniqueB  │
-        └────────────┘ └────────────┘
-```
-
-### Complexity
-| Metric | Value |
-|---|---|
-| Time  | `O(N)` — two linear passes over the array |
-| Space | `O(1)` — only a handful of extra variables |
-
----
-
-## ⚠️ Key Pitfall: Integer Overflow
-
-**Timestamp:** `22:04 - 23:25`
-
-Computing `-xorAll` (the two's complement negation) can **overflow**
-if `xorAll` equals `INT_MIN` (`-2147483648`), because there is no
-corresponding positive value representable in a 32-bit signed `int`
-(`-(-2147483648)` overflows).
-
-**Fix:** store `xorAll` (and the negation) as a `long` (or `long long`
-in C++) instead of `int`. This gives enough headroom so the negation
-never overflows.
-
-```cpp
-long xorAll = 0;             // use long, NOT int
-for (int num : nums) xorAll ^= num;
-
-long rightmostSetBit = xorAll & (-xorAll);  // safe now
+          xor = x ^ y
+               │
+               │
+      Rightmost Set Bit
+               │
+        mask = xor & (-xor)
 ```
 
 ---
 
-## Files
+# Step 3
 
-| File | Description |
-|---|---|
-| `SingleNumberIII.cpp` | Full C++ implementation of both approaches, with test cases (including the `INT_MIN` overflow edge case) |
+Divide all numbers into two groups.
 
-## Complexity Summary
-
-| Approach | Time | Space |
-|---|---|---|
-| Brute Force (Hash Map) | `O(N log M)` | `O(M)` |
-| Bit Manipulation (Optimal) | `O(N)` | `O(1)` |
-
-## How to Run
-
-```bash
-g++ -std=c++17 -O2 SingleNumberIII.cpp -o solution
-./solution
+```
+                mask
+                 │
+        ┌────────┴────────┐
+        │                 │
+     Bit = 1           Bit = 0
+        │                 │
+      x, pairs         y, pairs
 ```
 
-## Reference
+Duplicate numbers always go into the same group, so they cancel each other.
 
-- take U forward — Single Number III walkthrough (video timestamps noted above)
-- LeetCode 260: https://leetcode.com/problems/single-number-iii/
+```
+a ^ a = 0
+```
+
+Finally,
+
+```
+Group 1 XOR = x
+
+Group 2 XOR = y
+```
+
+---
+
+# Algorithm
+
+1. XOR every element.
+2. Find the rightmost set bit.
+3. Divide numbers into two groups using this bit.
+4. XOR each group separately.
+5. The two XOR values are the required answers.
+
+---
+
+# Complexity
+
+| Time | Space |
+|------|-------|
+| O(N) | O(1) |
+
+---
+
+# Important Note
+
+While extracting the rightmost set bit, use a wider integer type if needed to safely handle edge cases involving the minimum integer value.
+
+---
+
+# Key Properties
+
+- `a ^ a = 0`
+- `a ^ 0 = a`
+- XOR is **Commutative**
+- XOR is **Associative**
+
+---
+
+## Summary
+
+Whenever exactly **two unique elements** exist and every other element appears **twice**, compute the XOR of the array, isolate one distinguishing bit, split the elements into two groups, and XOR each group independently to obtain both unique numbers in **O(N)** time and **O(1)** extra space.
