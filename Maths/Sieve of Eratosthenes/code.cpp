@@ -4,7 +4,6 @@ using namespace std;
 vector<int> sieveOfEratosthenes(int n) {
     vector<int> isPrime(n + 1, 1);
     isPrime[0] = isPrime[1] = 0;
-
     for (int i = 2; (long long)i * i <= n; i++) {
         if (isPrime[i] == 1) {
             for (int j = i * i; j <= n; j += i) {
