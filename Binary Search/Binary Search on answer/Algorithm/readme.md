@@ -81,7 +81,7 @@ int binarySearchOnAnswer(int arr[], int n, int lo, int hi) {
   }
   ```
 
-## Time Complexity
+## Time Complexity~
 
 - `O(log(hi - lo) * cost_of_isPossible())`
 - The `isPossible()` function is usually O(n), making total complexity

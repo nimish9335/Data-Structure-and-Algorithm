@@ -1,121 +1,125 @@
-# Square Root Decomposition — Notes
+# 🧱 Square Root Decomposition
 
-## 1. What Problem It Solves
+![Type](https://img.shields.io/badge/Type-Online-blueviolet)
+![Complexity](https://img.shields.io/badge/Time-O(%E2%88%9An)-orange)
+![Space](https://img.shields.io/badge/Space-O(n)-yellow)
 
-Given an array of size `n`, we want to efficiently support:
-- **Range queries**: sum / min / max / gcd over `[l, r]`
-- **Point updates**: change value at index `i`
-
-Brute force: O(n) per query, O(1) per update.
-Segment Tree: O(log n) per query and update.
-**Sqrt Decomposition: O(√n) per query and update — simpler to code, slightly slower asymptotically.**
+> 🎯 **One-liner:** Split the array into `√n` blocks, precompute an answer per block, then combine full blocks + edge elements to answer any query fast.
 
 ---
 
-## 2. Core Idea
-
-Split the array into blocks of size `√n`.
+## 🧠 1. Core Idea
 
 ```
-Array:   [ 2 4 5 | 8 1 9 | 3 6 7 | 0 ]
-Block:       0        1       2     3
+Array:   [ 2   4   5 | 8   1   9 | 3   6   7 | 0 ]
+Block:        0            1           2       3
 ```
 
-For each block, precompute an aggregate value (sum, min, etc.) called `block[]`.
+Each block stores one precomputed value (sum, min, max, etc.) called `block[]`.
 
-- **Update**: change `arr[i]`, then update only the aggregate of the block containing `i` → O(1)
-- **Query(l, r)**:
-  - Left partial block → add elements one by one until block boundary
-  - Middle full blocks → add `block[]` value directly
-  - Right partial block → add elements one by one
-  - Total touched elements ≈ O(√n)
+- 🟩 **Full blocks** inside a query → use `block[]` directly (O(1) per block)
+- 🟨 **Partial blocks** at the edges → scan element by element
 
----
-
-## 3. Why Block Size = √n
-
-Let block size = `s`.
-
-- Number of blocks ≈ `n / s`
-- Elements scanned at the two partial edges ≈ `2s`
-
-Total work per query ≈ `n/s + s`
-
-This is minimized when `s = √n` (AM-GM inequality: for fixed product, sum is minimized when the two terms are equal).
-
-Result: **O(√n) per query**.
+```
+ Query [2, 8]
+        ▼                             ▼
+[ 2   4 | 5   8   1 | 9   3   6 | 7   0 ]
+     🟨    🟩🟩🟩🟩🟩    🟩🟩🟩🟩   🟨
+   partial     full block      full     partial
+```
 
 ---
 
-## 4. Step-by-Step Algorithm
+## 📦 2. Why Block Size = √n
 
-### Build
-1. Compute `block_size = ceil(sqrt(n))`
-2. Compute `num_blocks = ceil(n / block_size)`
-3. For each index `i`, its block id = `i / block_size`
-4. Accumulate `block[block_id] += arr[i]`
-
-### Update(i, val)
-1. `block_id = i / block_size`
-2. `block[block_id] += val - arr[i]`
-3. `arr[i] = val`
-
-### Query(l, r)  — for sum
-1. Start at `i = l`
-2. While `i <= r`:
-   - If `i` is at the start of a block **and** the whole block `[i, i+block_size-1]` lies inside `[l, r]`:
-     - `sum += block[i / block_size]`
-     - `i += block_size`
-   - Else:
-     - `sum += arr[i]`
-     - `i += 1`
-3. Return `sum`
-
----
-
-## 5. Complexity
-
-| Operation | Time |
+| Term | Cost |
 |---|---|
-| Build | O(n) |
-| Update | O(1) |
-| Query | O(√n) |
-| Space | O(n + √n) |
-
----
-
-## 6. Variants (good to remember)
-
-| Variant | Idea |
-|---|---|
-| **Range Update, Point Query** | Keep a "lazy" add value per block. On range update, fully-covered blocks just get `lazy[block] += val`; partial blocks updated element-wise. Point query = `arr[i] + lazy[block_of_i]`. |
-| **Range Min/Max** | Same structure, but `block[]` stores min/max instead of sum; update requires recomputing block from scratch if the changed element was the min/max → O(block_size) update. |
-| **Mo's Algorithm** | Offline range queries. Sort queries by `(l / block_size, r)`. Maintain a sliding window `[curL, curR]` and move pointers query to query. Total complexity O((n + q)·√n). |
-| **Frequency / Distinct counting** | Blocks store frequency tables or counts of distinct elements; useful for "count distinct in range" type problems. |
-
----
-
-## 7. When to Use This Over Segment Tree
-
-Use sqrt decomposition when:
-- The merge operation is awkward or non-associative (segment tree needs a clean merge function)
-- You need range-update + point-query and don't want lazy propagation complexity
-- Problem size is moderate (n ≤ 10^5 or so) and code simplicity matters more than the log factor
-- You're implementing **Mo's Algorithm**, which inherently uses block decomposition
-
-Use segment tree when:
-- You need O(log n) guarantees
-- You need range update + range query together (segment tree with lazy propagation handles this cleanly)
-
----
-
-## 8. Quick Recall Cheat-Sheet
+| Number of blocks | `n / s` |
+| Elements scanned at 2 edges | `2s` |
+| **Total per query** | `n/s + s` |
 
 ```
-block_size = sqrt(n)
-block_id(i) = i / block_size
-block_start(b) = b * block_size
-block_end(b) = min(n-1, block_start(b) + block_size - 1)
+ ┌────────────────────────────────────┐
+ │  minimized when  s = √n            │
+ │  →  O(√n) per query                │
+ └────────────────────────────────────┘
+```
+📐 This comes straight from AM-GM: for a fixed product, a sum of two terms is smallest when they're equal.
+
+---
+
+## 🎨 3. The Three Operations
+
+| Operation | Cost | What Happens |
+|:---:|:---:|---|
+| 🏗️ **Build** | `O(n)` | Precompute `block[]` from `arr[]` |
+| ✏️ **Update(i, val)** | `O(1)` | Fix `arr[i]`, patch only its block's aggregate |
+| 🔍 **Query(l, r)** | `O(√n)` | Partial + full + partial, as shown above |
+
+---
+
+## 🔄 4. Update in One Picture
+
+```
+Before:  Block 1 = [8, 1, 9]   block[1] = 18
+
+update(index_of_1, 5)
+
+After:   Block 1 = [8, 5, 9]   block[1] = 18 + (5-1) = 22
+```
+
+```cpp
+block[i / blockSize] += val - arr[i];
+arr[i] = val;
+```
+
+---
+
+## 🔍 5. Query in One Picture
+
+```
+query(2, 8):
+
+ idx:     0   1   2   3   4   5   6   7   8   9
+ arr:   [ 2   4 | 5   8   1 | 9   3   6 | 7   0 ]
+              🟨  ───full block───  ──full──  🟨
+              +5      +14              +18     +7
+```
+
+```
+sum = arr[2] + block[1] + block[2] + arr[7]
+    = 5      + 14        + 18       + 7
+    = 44
+```
+
+---
+
+## 🌈 6. Common Variants
+
+| Variant | 🧩 Idea |
+|---|---|
+| 🟦 **Range Update, Point Query** | Store a `lazy[]` add-value per block; full blocks get `lazy[b] += val`, partial ones updated directly |
+| 🟪 **Range Min / Max** | `block[]` holds min/max; if the changed value *was* the min/max, recompute that block from scratch |
+| 🟧 **Mo's Algorithm** | Offline queries sorted by block — same block-splitting idea, different use case |
+| 🟩 **Distinct Count / Frequency** | Each block stores a small frequency table instead of a single number |
+
+---
+
+## ✅ 7. When to Use It
+
+| Use it when... | Skip it when... |
+|---|---|
+| 🟢 Merge logic is awkward for a segment tree | 🔴 You need strict `O(log n)` guarantees |
+| 🟢 You want simple, quick-to-write code | 🔴 You need range update **+** range query together (segment tree + lazy prop is cleaner) |
+| 🟢 `n` is small–moderate (≤ 10⁵ ish) | 🔴 Merge is trivial and associative (segment tree wins) |
+
+---
+
+## 🏷️ 8. Cheat Sheet
+
+```
+block_size   = ceil(sqrt(n))
+block_id(i)  = i / block_size
 
 update(i, val):
     block[block_id(i)] += val - arr[i]
@@ -135,8 +139,8 @@ query(l, r):
 
 ---
 
-## 9. Pitfalls to Remember
+## ⚠️ 9. Common Pitfalls
 
-- Off-by-one errors on the last block if `n` is not divisible by `block_size` (last block may be smaller)
-- Recomputing block aggregate after a "destructive" update (like min/max) instead of doing it in O(1)
-- Forgetting `block_size = ceil(sqrt(n))`, not `floor` (floor can leave one block short)
+- ❗ Using `floor(sqrt(n))` instead of `ceil` → last block can be undersized
+- ❗ Off-by-one on the last (smaller) block
+- ❗ For min/max updates: forgetting to **recompute** the whole block when the changed element was the extremum
