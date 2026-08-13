@@ -44,7 +44,7 @@ Fix the first two elements using two nested loops, then use a hash set to check,
 This is the most efficient approach, and it directly extends the two-pointer intuition used in 3 Sum by fixing one more element:
 - First, sort the array. Sorting enables the two-pointer technique and makes duplicate skipping straightforward.
 - Fix the first element with an outer loop (`i` from `0` to `n - 1`), skipping duplicate values for `i`.
-- Fix the second element with a nested loop (`j` from `i + 1` to `n - 1`), skipping duplicate values for `j`.
+- Fix the second element with a nested loop (`j` from `i + 1` to `n - 1`), skipping duplicate values for `j` .
 - For each fixed pair `(i, j)`, use two pointers: `k` starting just after `j`, and `l` starting at the end of the array.
   - If `arr[i] + arr[j] + arr[k] + arr[l]` is less than the target, move `k` forward to increase the sum.
   - If it's greater than the target, move `l` backward to decrease the sum.
