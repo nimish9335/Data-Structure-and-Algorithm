@@ -17,7 +17,7 @@ public:
     }
     void insert(int num){
         Node*node=root;
-        for(int i=0;i<32;i++){
+        for(int i=30;i>=0;i--){
             int bit=(num>>i) & 1;
             if(node->child[bit]==nullptr){
                 node->child[bit]=new Node();
@@ -28,7 +28,7 @@ public:
     int getMaxXor(int num){
         Node*node=root;
         int ans=0;
-        for(int i=0;i<32;i++){
+        for(int i=30;i>=0;i--){
             int bit=(num>>i) & 1;
             int opo=1-bit;
             if(node->child[opo]!=nullptr){
